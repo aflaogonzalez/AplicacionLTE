@@ -1,5 +1,6 @@
 package cl.lte.aplicacionlte
 
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -22,7 +23,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // --- Toolbar Setup ---
-        setSupportActionBar(binding.appBarMain.toolbar)
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
         // --- Device Type Detection ---
@@ -43,73 +44,68 @@ class MainActivity : AppCompatActivity() {
         }
 
         // --- FAB Setup ---
-        binding.appBarMain.fab?.setOnClickListener { view ->
+        binding.fab?.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null)
                 .setAnchorView(R.id.fab).show()
         }
 
-        // --- Setup Carousels ---
-        setupCarousel(
-            carouselId = R.id.carousel_zone_1,
-            leftArrowId = R.id.arrow_left_zone_1,
-            rightArrowId = R.id.arrow_right_zone_1,
-            images = listOf(R.drawable.foto1, R.drawable.foto2, R.drawable.foto3)
-        )
-
-        setupCarousel(
-            carouselId = R.id.carousel_zone_2,
-            leftArrowId = R.id.arrow_left_zone_2,
-            rightArrowId = R.id.arrow_right_zone_2,
-            images = listOf(R.drawable.foto4, R.drawable.foto5, R.drawable.foto6)
-        )
-
-        setupCarousel(
-            carouselId = R.id.carousel_zone_3,
-            leftArrowId = R.id.arrow_left_zone_3,
-            rightArrowId = R.id.arrow_right_zone_3,
-            images = listOf(R.drawable.foto7, R.drawable.foto8, R.drawable.foto9)
-        )
+        // --- Setup Carousels based on orientation --- 
+        // This check is now more complex due to the different layout roots across configurations
+        val landscapeView = findViewById<ImageButton>(R.id.arrow_down_zone_1)
+        if (landscapeView != null) {
+            // Landscape layout is inflated, setup vertical carousels
+            setupVerticalCarousels()
+        } else {
+            // Portrait layout is inflated, setup horizontal carousels
+            setupHorizontalCarousels()
+        }
     }
 
-    private fun setupCarousel(
-        @IdRes carouselId: Int,
-        @IdRes leftArrowId: Int,
-        @IdRes rightArrowId: Int,
-        images: List<Int>
-    ) {
-        val carouselView = findViewById<ViewPager2>(carouselId)
-        val arrowLeft = findViewById<ImageButton>(leftArrowId)
-        val arrowRight = findViewById<ImageButton>(rightArrowId)
+    private fun setupHorizontalCarousels() {
+        setupHorizontalCarousel(R.id.carousel_zone_1, R.id.arrow_left_zone_1, R.id.arrow_right_zone_1, listOf(R.drawable.foto1, R.drawable.foto2, R.drawable.foto3))
+        setupHorizontalCarousel(R.id.carousel_zone_2, R.id.arrow_left_zone_2, R.id.arrow_right_zone_2, listOf(R.drawable.foto4, R.drawable.foto5, R.drawable.foto6))
+        setupHorizontalCarousel(R.id.carousel_zone_3, R.id.arrow_left_zone_3, R.id.arrow_right_zone_3, listOf(R.drawable.foto7, R.drawable.foto8, R.drawable.foto9))
+    }
 
-        if (images.isEmpty()) return // Do not setup if there are no images
+    private fun setupVerticalCarousels() {
+        setupVerticalCarousel(R.id.carousel_zone_1, R.id.arrow_down_zone_1, listOf(R.drawable.foto1, R.drawable.foto2, R.drawable.foto3))
+        setupVerticalCarousel(R.id.carousel_zone_2, R.id.arrow_down_zone_2, listOf(R.drawable.foto4, R.drawable.foto5, R.drawable.foto6))
+        setupVerticalCarousel(R.id.carousel_zone_3, R.id.arrow_down_zone_3, listOf(R.drawable.foto7, R.drawable.foto8, R.drawable.foto9))
+    }
 
+    private fun setupHorizontalCarousel(@IdRes carouselId: Int, @IdRes leftArrowId: Int, @IdRes rightArrowId: Int, images: List<Int>) {
+        val carouselView = findViewById<ViewPager2>(carouselId) ?: return
+        val arrowLeft = findViewById<ImageButton>(leftArrowId) ?: return
+        val arrowRight = findViewById<ImageButton>(rightArrowId) ?: return
+
+        if (images.isEmpty()) return
         carouselView.adapter = ImageCarouselAdapter(images)
-
-        // Start in the middle to allow scrolling left and right from the beginning
         val middlePosition = Integer.MAX_VALUE / 2
         carouselView.setCurrentItem(middlePosition - middlePosition % images.size, false)
 
-        arrowLeft.setOnClickListener {
-            carouselView.currentItem = carouselView.currentItem - 1
-        }
+        arrowLeft.setOnClickListener { carouselView.currentItem -= 1 }
+        arrowRight.setOnClickListener { carouselView.currentItem += 1 }
+    }
 
-        arrowRight.setOnClickListener {
-            carouselView.currentItem = carouselView.currentItem + 1
-        }
+    private fun setupVerticalCarousel(@IdRes carouselId: Int, @IdRes downArrowId: Int, images: List<Int>) {
+        val carouselView = findViewById<ViewPager2>(carouselId) ?: return
+        val arrowDown = findViewById<ImageButton>(downArrowId) ?: return
+
+        if (images.isEmpty()) return
+        carouselView.adapter = ImageCarouselAdapter(images)
+        val middlePosition = Integer.MAX_VALUE / 2
+        carouselView.setCurrentItem(middlePosition - middlePosition % images.size, false)
+
+        arrowDown.setOnClickListener { carouselView.currentItem += 1 }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        val result = super.onCreateOptionsMenu(menu)
-        val navView: NavigationView? = findViewById(R.id.nav_view)
-        if (navView == null) {
-            menuInflater.inflate(R.menu.overflow, menu)
-        }
-        return result
+        menuInflater.inflate(R.menu.overflow, menu)
+        return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Previous navigation logic was here.
         return super.onOptionsItemSelected(item)
     }
 }
