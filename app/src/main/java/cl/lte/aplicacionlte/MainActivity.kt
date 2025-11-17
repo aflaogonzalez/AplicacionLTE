@@ -4,13 +4,9 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ImageButton
-import android.widget.TextView
+import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupWithNavController
+import androidx.viewpager2.widget.ViewPager2
 import cl.lte.aplicacionlte.databinding.ActivityMainBinding
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
@@ -18,7 +14,6 @@ import kotlin.math.min
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,36 +36,66 @@ class MainActivity : AppCompatActivity() {
             smallestWidthDp >= 600 -> "tablet"
             else -> "phone"
         }
-        val deviceTextView = findViewById<TextView>(R.id.device_type_textview)
-        deviceTextView.text = deviceType
-
-        // --- Navigation Setup ---
-        val navHostFragment =
-            (supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment?)!!
-        val navController = navHostFragment.navController
 
         // Hamburger Icon Click Listener
         findViewById<ImageButton>(R.id.hamburger_icon).setOnClickListener {
             binding.drawerLayout?.open()
         }
 
-        // Setup for Drawer (Side Navigation)
-        binding.navView?.let {
-            appBarConfiguration = AppBarConfiguration(
-                setOf(R.id.nav_transform, R.id.nav_reflow, R.id.nav_slideshow, R.id.nav_settings),
-                binding.drawerLayout
-            )
-            it.setupWithNavController(navController)
-        }
-
-        // Setup for Bottom Navigation
-        binding.appBarMain.contentMain.bottomNavView?.setupWithNavController(navController)
-
         // --- FAB Setup ---
         binding.appBarMain.fab?.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null)
                 .setAnchorView(R.id.fab).show()
+        }
+
+        // --- Setup Carousels ---
+        setupCarousel(
+            carouselId = R.id.carousel_zone_1,
+            leftArrowId = R.id.arrow_left_zone_1,
+            rightArrowId = R.id.arrow_right_zone_1,
+            images = listOf(R.drawable.foto1, R.drawable.foto2, R.drawable.foto3)
+        )
+
+        setupCarousel(
+            carouselId = R.id.carousel_zone_2,
+            leftArrowId = R.id.arrow_left_zone_2,
+            rightArrowId = R.id.arrow_right_zone_2,
+            images = listOf(R.drawable.foto4, R.drawable.foto5, R.drawable.foto6)
+        )
+
+        setupCarousel(
+            carouselId = R.id.carousel_zone_3,
+            leftArrowId = R.id.arrow_left_zone_3,
+            rightArrowId = R.id.arrow_right_zone_3,
+            images = listOf(R.drawable.foto7, R.drawable.foto8, R.drawable.foto9)
+        )
+    }
+
+    private fun setupCarousel(
+        @IdRes carouselId: Int,
+        @IdRes leftArrowId: Int,
+        @IdRes rightArrowId: Int,
+        images: List<Int>
+    ) {
+        val carouselView = findViewById<ViewPager2>(carouselId)
+        val arrowLeft = findViewById<ImageButton>(leftArrowId)
+        val arrowRight = findViewById<ImageButton>(rightArrowId)
+
+        if (images.isEmpty()) return // Do not setup if there are no images
+
+        carouselView.adapter = ImageCarouselAdapter(images)
+
+        // Start in the middle to allow scrolling left and right from the beginning
+        val middlePosition = Integer.MAX_VALUE / 2
+        carouselView.setCurrentItem(middlePosition - middlePosition % images.size, false)
+
+        arrowLeft.setOnClickListener {
+            carouselView.currentItem = carouselView.currentItem - 1
+        }
+
+        arrowRight.setOnClickListener {
+            carouselView.currentItem = carouselView.currentItem + 1
         }
     }
 
@@ -84,17 +109,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.nav_settings) {
-            val navController = findNavController(R.id.nav_host_fragment_content_main)
-            navController.navigate(R.id.nav_settings)
-            return true
-        }
+        // Previous navigation logic was here.
         return super.onOptionsItemSelected(item)
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        // appBarConfiguration is now only for the drawer, so this should work as before.
-        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 }
